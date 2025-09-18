@@ -1,0 +1,144 @@
+// BoardManager.cs
+
+using UnityEngine;
+
+// Bu sınıf, oyun tahtasının yönetiminden sorumludur.
+// Taşların hareket kurallarını bilmesine gerek yoktur, sadece tahtadaki
+// taşların konumunu ve durumunu yönetir.
+public class BoardManager : MonoBehaviour
+{
+    // Tahtanın 8x8'lik yapısını temsil eden 2D dizi.
+    // Her bir hücre, o karede bulunan Piece nesnesini (taşı) tutar.
+    public Piece[,] pieces = new Piece[8, 8];
+
+    // Bu, tahta üzerinde kullanılacak tüm taş prefab'lerinin listesidir.
+    // Unity Inspector penceresinden bu listeyi doldurmalısın.
+    public GameObject[] piecePrefabs;
+
+    void Start()
+    {
+        // Oyun başladığında tahtayı ilk konfigürasyonuna ayarla.
+        SetupBoard();
+    }
+
+    void SetupBoard()
+    {
+        // Başlangıç pozisyonundaki tüm piyonları tahtaya yerleştirir.
+        // PlacePiece metodu, karmaşık instantiating (oluşturma) işlemini
+        // bu metottan ayırır.
+        for (int i = 0; i < 8; i++)
+        {
+            PlacePiece(PieceType.Pawn, PieceColor.White, new Vector2Int(i, 1));
+            PlacePiece(PieceType.Pawn, PieceColor.Black, new Vector2Int(i, 6));
+        }
+
+        // Kale, At, Fil, Vezir ve Şahlar için de buraya benzer kodlar eklenecek.
+    }
+
+    // Bu metot, bir taşı verilen konuma yerleştirmekten sorumludur.
+    // Taşı oluşturur, verilerini atar ve tahtanın 2D dizisine ekler.
+    public void PlacePiece(PieceType type, PieceColor color, Vector2Int position)
+    {
+        // piecePrefabs dizisinden doğru prefab'i bulur.
+        GameObject piecePrefab = FindPiecePrefab(type, color);
+        // Prefab'den bir kopya oluşturur ve onu doğru dünya koordinatına yerleştirir.
+        GameObject newPieceObject = Instantiate(piecePrefab, GetWorldPosition(position), Quaternion.identity);
+
+        // Yeni oluşturulan nesnedeki Piece bileşenini alır.
+        Piece newPiece = newPieceObject.GetComponent<Piece>();
+        // Piece bileşeninin verilerini ayarlar.
+        newPiece.pieceColor = color;
+        newPiece.pieceType = type;
+        newPiece.currentPosition = position;
+        // Piece nesnesine BoardManager referansını atar, böylece Piece tahta hakkında bilgi alabilir.
+        newPiece.board = this;
+
+        // SOLID: Burada, taşa kendi hareket mantığını atıyoruz.
+        // Bu, yeni bir taş türü eklemek istediğinde sadece buraya yeni bir satır ekleyeceğin anlamına gelir.
+        if (type == PieceType.Pawn)
+        {
+            newPiece.SetMover(new PawnMover()); // Piyon için PawnMover nesnesi oluşturulup atanır.
+        }
+        // Diğer taş türleri için de buraya else if'ler eklenecek.
+
+        // Taşı, tahtanın 2D dizisinde doğru konuma yerleştirir.
+        pieces[position.x, position.y] = newPiece;
+    }
+
+    // Verilen konumdaki taşı döndürür. Eğer kare boşsa null döndürür.
+    public Piece GetPiece(Vector2Int position)
+    {
+        if (position.x >= 0 && position.x < 8 && position.y >= 0 && position.y < 8)
+        {
+            return pieces[position.x, position.y];
+        }
+        return null;
+    }
+
+    // Tahta koordinatlarını (örn: 0,0), Unity'deki sahne koordinatlarına dönüştürür.
+    public Vector3 GetWorldPosition(Vector2Int position)
+    {
+        // Bu kısım, tahta objesinin ve kameranın konumuna göre ayarlanmalıdır.
+        // Örnek: Tahtanın sol alt köşesi (0,0) olsun ve kareler 1 birim büyüklüğünde olsun.
+        return new Vector3(position.x, position.y, 0);
+    }
+
+    // piecePrefabs dizisinde ilgili taşın prefab'ini bulur.
+    private GameObject FindPiecePrefab(PieceType type, PieceColor color)
+    {
+        // Öncelikle piecePrefabs listesinin boş olup olmadığını kontrol edelim.
+        if (piecePrefabs == null || piecePrefabs.Length == 0)
+        {
+            Debug.LogError("Piece Prefabs listesi BoardManager'da boş! Lütfen prefab'leri ekleyin.");
+            return null;
+        }
+
+        // Beklenen prefab ismini oluşturalım. Örneğin: "Pawn_White", "Pawn_Black".
+        string desiredPrefabName = type.ToString() + "_" + color.ToString();
+
+        // piecePrefabs listesindeki tüm prefab'leri kontrol edelim.
+        foreach (GameObject prefab in piecePrefabs)
+        {
+            // Eğer bir prefab'in adı, aradığımız isimle eşleşiyorsa, o prefab'i döndür.
+            if (prefab != null && prefab.name == desiredPrefabName)
+            {
+                return prefab;
+            }
+        }
+
+        // Eğer istenen prefab listede bulunamazsa hata mesajı logla.
+        Debug.LogError("Prefab bulunamadı: " + desiredPrefabName + ". Lütfen BoardManager'daki Piece Prefabs listesini kontrol edin.");
+        return null;
+    }
+
+    // YENİ EKLENEN METOT: Bir taşın sahnedeki yeni konumuna yerleştirilmesini yönetir.
+    public void OnPieceDropped(Piece piece, Vector2Int newPosition)
+    {
+        // Önce, taşın şu anki konumunu tahtadan kaldır.
+        // Bu, taşın yeni bir kareye gideceği anlamına gelir.
+        if (pieces[piece.currentPosition.x, piece.currentPosition.y] == piece) // Mevcut karede hala bu taş mı var? (Güvenlik için)
+        {
+            pieces[piece.currentPosition.x, piece.currentPosition.y] = null;
+        }
+
+        // Eğer yeni konumda başka bir taş varsa (örneğin rakip bir taş), onu yok et.
+        Piece targetPiece = GetPiece(newPosition);
+        if (targetPiece != null && targetPiece.pieceColor != piece.pieceColor)
+        {
+            Destroy(targetPiece.gameObject); // Unity sahnesinden obje olarak kaldır.
+        }
+
+        // Taşı tahta üzerindeki yeni konuma yerleştir.
+        pieces[newPosition.x, newPosition.y] = piece;
+
+        // Taşın kendi içindeki konum bilgisini güncelle.
+        piece.currentPosition = newPosition;
+
+        // Taşın Unity sahnesindeki (görsel) konumunu da güncelle.
+        piece.transform.position = GetWorldPosition(newPosition);
+
+        // Burada sıra değişikliği, oyun durumu kontrolü (şah, mat vb.) gibi
+        // ek mantıklar uygulanabilir.
+        Debug.Log(piece.pieceColor + " " + piece.pieceType + " taşını " + newPosition.x + "," + newPosition.y + " konumuna hareket ettirdi.");
+    }
+}
