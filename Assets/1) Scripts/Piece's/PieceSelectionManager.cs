@@ -10,6 +10,16 @@ public class PieceSelectionManager : Singeleton<PieceSelectionManager>
     public Piece selectedPiece;
     private List<GameObject> activeIndicators = new List<GameObject>();
 
+    void OnEnable()
+    {
+        BoardClickHandler.onBoardClicked += ClearSelection;
+    }
+
+    void OnDisable()
+    {
+        BoardClickHandler.onBoardClicked -= ClearSelection;
+    }
+
     public void SelectedPiece(Piece piece)
     {
         if (piece.pieceColor != TurnManager.currentTurn)
@@ -77,12 +87,18 @@ public class PieceSelectionManager : Singeleton<PieceSelectionManager>
     }
 
     // Oluşturulan tüm hareket belirteçlerini yok eder.
-    private void ClearIndicators()
+    public void ClearIndicators()
     {
         foreach (GameObject indicator in activeIndicators)
         {
             Destroy(indicator);
         }
         activeIndicators.Clear();
+    }
+
+    public void ClearSelection()
+    {
+        selectedPiece = null;
+        ClearIndicators();
     }
 }

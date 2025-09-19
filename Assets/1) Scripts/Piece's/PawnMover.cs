@@ -12,7 +12,6 @@ public class PawnMover : IPieceMover
             return false;
 
         int direction = (piece.pieceColor == PieceColor.White) ? 1 : -1;
-        int startRow = (piece.pieceColor == PieceColor.White) ? 1 : 6;
 
         //Only forward move
         if (targetPosition.x == currentPosition.x)
@@ -21,12 +20,23 @@ public class PawnMover : IPieceMover
             if (targetPosition.y == currentPosition.y + direction && board.GetPiece(targetPosition) == null)
                 return true;
 
-            // Move two squares forward from starting position
-            if (currentPosition.y == startRow && targetPosition.y == currentPosition.y + 2 * direction && board.GetPiece(new Vector2Int(currentPosition.x, currentPosition.y + direction)) == null && board.GetPiece(targetPosition) == null)
+            // Move two squares forward if the pawn has not moved yet
+            if (!piece.hasMoved && targetPosition.y == currentPosition.y + 2 * direction && board.GetPiece(new Vector2Int(currentPosition.x, currentPosition.y + direction)) == null && board.GetPiece(targetPosition) == null)
                 return true;
         }
 
-        // Other rules like capturing diagonally can be added here
+        // A pawn captures diagonally
+        if (Mathf.Abs(targetPosition.x - currentPosition.x) == 1 && targetPosition.y == currentPosition.y + direction)
+        {
+            Piece targetPiece = board.GetPiece(targetPosition);
+            if (targetPiece != null && targetPiece.pieceColor != piece.pieceColor)
+            {
+                Debug.Log("Taş siliniyor:" + targetPiece);
+                return true;
+            }
+        }
+
+        // Other rules can be added here (en passant, promotion, etc.)
 
         return false;
     }

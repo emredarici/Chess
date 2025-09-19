@@ -1,12 +1,22 @@
-// BoardManager.cs
-
 using UnityEngine;
+using System;
+
+public struct LastMoveInfo
+{
+    public Vector2Int from;
+    public Vector2Int to;
+    public Piece piece;
+    public bool wasDoublePawnMove;
+}
 
 // Bu sınıf, oyun tahtasının yönetiminden sorumludur.
 // Taşların hareket kurallarını bilmesine gerek yoktur, sadece tahtadaki
 // taşların konumunu ve durumunu yönetir.
 public class BoardManager : MonoBehaviour
 {
+    // Event fired after a piece move is applied. Listeners can show indicators, sounds, etc.
+    public static Action<LastMoveInfo> PieceMoved;
+
     // Tahtanın 8x8'lik yapısını temsil eden 2D dizi.
     // Her bir hücre, o karede bulunan Piece nesnesini (taşı) tutar.
     public Piece[,] pieces = new Piece[8, 8];
@@ -14,6 +24,8 @@ public class BoardManager : MonoBehaviour
     // Bu, tahta üzerinde kullanılacak tüm taş prefab'lerinin listesidir.
     // Unity Inspector penceresinden bu listeyi doldurmalısın.
     public GameObject[] piecePrefabs;
+
+    public LastMoveInfo lastMove;
 
     void Start()
     {
@@ -114,31 +126,45 @@ public class BoardManager : MonoBehaviour
     // YENİ EKLENEN METOT: Bir taşın sahnedeki yeni konumuna yerleştirilmesini yönetir.
     public void OnPieceDropped(Piece piece, Vector2Int newPosition)
     {
-        // Önce, taşın şu anki konumunu tahtadan kaldır.
-        // Bu, taşın yeni bir kareye gideceği anlamına gelir.
-        if (pieces[piece.currentPosition.x, piece.currentPosition.y] == piece) // Mevcut karede hala bu taş mı var? (Güvenlik için)
-        {
-            pieces[piece.currentPosition.x, piece.currentPosition.y] = null;
-        }
+        // Capture the original position before any mutation
+        Vector2Int fromPosition = piece.currentPosition;
 
-        // Eğer yeni konumda başka bir taş varsa (örneğin rakip bir taş), onu yok et.
+        // If there is a piece at the destination and it's an opponent, remove it.
         Piece targetPiece = GetPiece(newPosition);
         if (targetPiece != null && targetPiece.pieceColor != piece.pieceColor)
         {
             Destroy(targetPiece.gameObject); // Unity sahnesinden obje olarak kaldır.
+            pieces[newPosition.x, newPosition.y] = null; // clear board reference
         }
 
-        // Taşı tahta üzerindeki yeni konuma yerleştir.
+        // Remove piece from its current square on the board array (safety check)
+        if (pieces[fromPosition.x, fromPosition.y] == piece)
+        {
+            pieces[fromPosition.x, fromPosition.y] = null;
+        }
+
+        // Place the piece into the new square (board array)
         pieces[newPosition.x, newPosition.y] = piece;
 
-        // Taşın kendi içindeki konum bilgisini güncelle.
+        // Update piece's internal position and visual transform
         piece.currentPosition = newPosition;
-
-        // Taşın Unity sahnesindeki (görsel) konumunu da güncelle.
         piece.transform.position = GetWorldPosition(newPosition);
 
-        // Burada sıra değişikliği, oyun durumu kontrolü (şah, mat vb.) gibi
-        // ek mantıklar uygulanabilir.
-        Debug.Log(piece.pieceColor + " " + piece.pieceType + " taşını " + newPosition.x + "," + newPosition.y + " konumuna hareket ettirdi.");
+        // Compute whether this move was a double pawn move (based on fromPosition)
+        bool wasDouble = (piece.pieceType == PieceType.Pawn) && Mathf.Abs(newPosition.y - fromPosition.y) == 2;
+        lastMove = new LastMoveInfo
+        {
+            from = fromPosition,
+            to = newPosition,
+            piece = piece,
+            wasDoublePawnMove = wasDouble
+        };
+
+        PieceMoved?.Invoke(lastMove);
+
+        // Mark that this piece has moved (useful for pawn double-step and castling logic)
+        piece.hasMoved = true;
+
+        Debug.Log(piece.pieceColor + " " + piece.pieceType + " taşını " + fromPosition + " -> " + newPosition + " konumuna hareket ettirdi.");
     }
 }
