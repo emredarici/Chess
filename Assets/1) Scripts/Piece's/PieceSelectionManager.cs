@@ -12,6 +12,9 @@ public class PieceSelectionManager : Singeleton<PieceSelectionManager>
 
     public void SelectedPiece(Piece piece)
     {
+        if (piece.pieceColor != TurnManager.currentTurn)
+            return;
+
         ClearIndicators();
         selectedPiece = piece;
         ShowValidMoves(selectedPiece);
@@ -31,6 +34,7 @@ public class PieceSelectionManager : Singeleton<PieceSelectionManager>
             selectedPiece.board.OnPieceDropped(selectedPiece, targetGridPosition);
             selectedPiece = null; // Taşı hareket ettirdikten sonra seçimi kaldır.
             ClearIndicators(); // Belirteçleri temizle.
+            TurnManager.SwitchTurn(); // Sırayı değiştir
         }
         else
         {
