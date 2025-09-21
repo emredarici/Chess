@@ -129,12 +129,44 @@ public class BoardManager : MonoBehaviour
         // Capture the original position before any mutation
         Vector2Int fromPosition = piece.currentPosition;
 
-        // If there is a piece at the destination and it's an opponent, remove it.
-        Piece targetPiece = GetPiece(newPosition);
-        if (targetPiece != null && targetPiece.pieceColor != piece.pieceColor)
+
+        // EN PASSANT: Eğer piyon çapraz boş kareye gidiyorsa ve lastMove'da iki kare ilerlemiş bir piyon hemen yanında ise, o piyonu sil.
+        bool enPassantCapture = false;
+        if (piece.pieceType == PieceType.Pawn && Mathf.Abs(newPosition.x - fromPosition.x) == 1 && newPosition.y != fromPosition.y)
         {
-            Destroy(targetPiece.gameObject); // Unity sahnesinden obje olarak kaldır.
-            pieces[newPosition.x, newPosition.y] = null; // clear board reference
+            // Hedef karede taş yoksa, ama lastMove'da iki kare ilerlemiş bir piyon hemen yanımızda ise
+            Piece targetPiece = GetPiece(newPosition);
+            if (targetPiece == null)
+            {
+                var last = lastMove;
+                if (last.piece != null &&
+                    last.piece.pieceType == PieceType.Pawn &&
+                    last.wasDoublePawnMove &&
+                    last.to.y == fromPosition.y &&
+                    last.to.x == newPosition.x &&
+                    last.piece.pieceColor != piece.pieceColor)
+                {
+                    // Rakip piyonun bulunduğu kareyi sil
+                    Piece capturedPawn = GetPiece(new Vector2Int(newPosition.x, fromPosition.y));
+                    if (capturedPawn != null && capturedPawn.pieceType == PieceType.Pawn && capturedPawn.pieceColor != piece.pieceColor)
+                    {
+                        Destroy(capturedPawn.gameObject);
+                        pieces[newPosition.x, fromPosition.y] = null;
+                        enPassantCapture = true;
+                    }
+                }
+            }
+        }
+
+        // Normal taş alma (veya en passant değilse)
+        if (!enPassantCapture)
+        {
+            Piece targetPiece = GetPiece(newPosition);
+            if (targetPiece != null && targetPiece.pieceColor != piece.pieceColor)
+            {
+                Destroy(targetPiece.gameObject); // Unity sahnesinden obje olarak kaldır.
+                pieces[newPosition.x, newPosition.y] = null; // clear board reference
+            }
         }
 
         // Remove piece from its current square on the board array (safety check)

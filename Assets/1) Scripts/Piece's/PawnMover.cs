@@ -34,6 +34,25 @@ public class PawnMover : IPieceMover
                 Debug.Log("Taş siliniyor:" + targetPiece);
                 return true;
             }
+
+            // EN PASSANT: Hedef karede taş yoksa, ama hemen yanındaki rakip piyon son hamlede iki kare ilerlediyse
+            // ve bu hamle hemen sonraki turda yapılıyorsa, en passant geçerli.
+            // Yani: hedef kare boş, ama lastMove'da iki kare ilerlemiş bir piyon var ve o piyon hemen yanımızda.
+            if (targetPiece == null)
+            {
+                var lastMove = board.lastMove;
+                // Son hamlede iki kare ilerlemiş bir piyon var mı?
+                if (lastMove.piece != null &&
+                    lastMove.piece.pieceType == PieceType.Pawn &&
+                    lastMove.wasDoublePawnMove &&
+                    lastMove.to.y == currentPosition.y && // Rakip piyon bizimle aynı yatayda
+                    lastMove.to.x == targetPosition.x && // Hedef kare rakip piyonun geçtiği sütun
+                    lastMove.piece.pieceColor != piece.pieceColor)
+                {
+                    // En passant yapılabilir!
+                    return true;
+                }
+            }
         }
 
         // Other rules can be added here (en passant, promotion, etc.)
