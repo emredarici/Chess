@@ -12,10 +12,11 @@ public struct LastMoveInfo
 // Bu sınıf, oyun tahtasının yönetiminden sorumludur.
 // Taşların hareket kurallarını bilmesine gerek yoktur, sadece tahtadaki
 // taşların konumunu ve durumunu yönetir.
-public class BoardManager : MonoBehaviour
+public class BoardManager : Singeleton<BoardManager>
 {
     // Event fired after a piece move is applied. Listeners can show indicators, sounds, etc.
     public static Action<LastMoveInfo> PieceMoved;
+    public static Action<Piece> PromoteRequested;
 
     // Tahtanın 8x8'lik yapısını temsil eden 2D dizi.
     // Her bir hücre, o karede bulunan Piece nesnesini (taşı) tutar.
@@ -192,11 +193,17 @@ public class BoardManager : MonoBehaviour
             wasDoublePawnMove = wasDouble
         };
 
-        PieceMoved?.Invoke(lastMove);
-
         // Mark that this piece has moved (useful for pawn double-step and castling logic)
         piece.hasMoved = true;
 
+        if (piece.pieceType == PieceType.Pawn && (newPosition.y == 0 || newPosition.y == 7))
+        {
+            PromoteRequested?.Invoke(piece);
+            return;
+        }
+
         Debug.Log(piece.pieceColor + " " + piece.pieceType + " taşını " + fromPosition + " -> " + newPosition + " konumuna hareket ettirdi.");
+
+        PieceMoved?.Invoke(lastMove);
     }
 }

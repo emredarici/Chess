@@ -42,9 +42,25 @@ public class PieceSelectionManager : Singeleton<PieceSelectionManager>
         {
             // Hareket geçerliyse, BoardManager'a taşı hareket ettirmesini söyle.
             selectedPiece.board.OnPieceDropped(selectedPiece, targetGridPosition);
+
+            // Eğer piyon terfi paneli açıldıysa turn değişimi yapılmasın
+            bool promotionPending = false;
+            if (selectedPiece.pieceType == PieceType.Pawn)
+            {
+                int y = targetGridPosition.y;
+                if (y == 0 || y == 7)
+                {
+                    promotionPending = true;
+                }
+            }
+
             selectedPiece = null; // Taşı hareket ettirdikten sonra seçimi kaldır.
             ClearIndicators(); // Belirteçleri temizle.
-            TurnManager.SwitchTurn(); // Sırayı değiştir
+
+            if (!promotionPending)
+            {
+                TurnManager.SwitchTurn(); // Sadece terfi yoksa sırayı değiştir
+            }
         }
         else
         {
