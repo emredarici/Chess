@@ -3158,6 +3158,12 @@ MonoBehaviour:
   piecePrefabs:
   - {fileID: 1423352956393760317, guid: 0dd41d738b075a741921b6827ac6efb6, type: 3}
   - {fileID: 1423352956393760317, guid: 116e9a14af4384f4294a43b9533d4075, type: 3}
+  - {fileID: 4811863187085275373, guid: eb8b5d217e522fc4fb3192457a4a05c9, type: 3}
+  - {fileID: 7651794593051027219, guid: 31b8ed6cc34174a4a98498ec5b68c216, type: 3}
+  - {fileID: 4308827905390438398, guid: 340c9881e3844a84d96e5b8c8cb081a3, type: 3}
+  - {fileID: 2498053691348059767, guid: 825223ac232af8b48b42a593e16542b6, type: 3}
+  - {fileID: 2726932043266059922, guid: 67966843a2f428e4cb588f8f9ded4ee2, type: 3}
+  - {fileID: 1142165901918011939, guid: 52fc6e911fb69a54d8bdd6708cd5ee0f, type: 3}
 --- !u!4 &761477446
 Transform:
   m_ObjectHideFlags: 0

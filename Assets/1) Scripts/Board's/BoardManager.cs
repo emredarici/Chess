@@ -45,7 +45,30 @@ public class BoardManager : Singeleton<BoardManager>
             PlacePiece(PieceType.Pawn, PieceColor.Black, new Vector2Int(i, 6));
         }
 
-        // Kale, At, Fil, Vezir ve Şahlar için de buraya benzer kodlar eklenecek.
+        // White Rooks
+        PlacePiece(PieceType.Rook, PieceColor.White, new Vector2Int(0, 0));
+        PlacePiece(PieceType.Rook, PieceColor.White, new Vector2Int(7, 0));
+        // Black Rooks
+        PlacePiece(PieceType.Rook, PieceColor.Black, new Vector2Int(0, 7));
+        PlacePiece(PieceType.Rook, PieceColor.Black, new Vector2Int(7, 7));
+
+        // White Bishops
+        PlacePiece(PieceType.Bishop, PieceColor.White, new Vector2Int(2, 0));
+        PlacePiece(PieceType.Bishop, PieceColor.White, new Vector2Int(5, 0));
+
+        // Black Bishops
+        PlacePiece(PieceType.Bishop, PieceColor.Black, new Vector2Int(2, 7));
+        PlacePiece(PieceType.Bishop, PieceColor.Black, new Vector2Int(5, 7));
+
+        // White Knights
+        PlacePiece(PieceType.Knight, PieceColor.White, new Vector2Int(1, 0));
+        PlacePiece(PieceType.Knight, PieceColor.White, new Vector2Int(6, 0));
+
+        // Black Knights
+        PlacePiece(PieceType.Knight, PieceColor.Black, new Vector2Int(1, 7));
+        PlacePiece(PieceType.Knight, PieceColor.Black, new Vector2Int(6, 7));
+
+        // This is where similar code for Knights, Bishops, Queens, and Kings will be added.
     }
 
     // Bu metot, bir taşı verilen konuma yerleştirmekten sorumludur.
@@ -67,10 +90,22 @@ public class BoardManager : Singeleton<BoardManager>
         newPiece.board = this;
 
         // SOLID: Burada, taşa kendi hareket mantığını atıyoruz.
-        // Bu, yeni bir taş türü eklemek istediğinde sadece buraya yeni bir satır ekleyeceğin anlamına gelir.
-        if (type == PieceType.Pawn)
+        // Yeni taş türü eklemek için sadece buraya yeni bir else if ekle.
+
+        switch (type)
         {
-            newPiece.SetMover(new PawnMover()); // Piyon için PawnMover nesnesi oluşturulup atanır.
+            case PieceType.Pawn:
+                newPiece.SetMover(new PawnMover());
+                break;
+            case PieceType.Rook:
+                newPiece.SetMover(new RookMover());
+                break;
+            case PieceType.Bishop:
+                newPiece.SetMover(new BishopMover());
+                break;
+            case PieceType.Knight:
+                newPiece.SetMover(new KnightMover());
+                break;
         }
         // Diğer taş türleri için de buraya else if'ler eklenecek.
 
