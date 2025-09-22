@@ -14,6 +14,8 @@ public class Piece : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        Debug.Log($"{pieceType} tıklandı: {currentPosition}");
+
         // If another piece is already selected and it is not this piece,
         // attempt to move the selected piece to this piece's square (capture).
         var manager = PieceSelectionManager.Instance;

@@ -36,9 +36,6 @@ public class BoardManager : Singeleton<BoardManager>
 
     void SetupBoard()
     {
-        // Başlangıç pozisyonundaki tüm piyonları tahtaya yerleştirir.
-        // PlacePiece metodu, karmaşık instantiating (oluşturma) işlemini
-        // bu metottan ayırır.
         for (int i = 0; i < 8; i++)
         {
             PlacePiece(PieceType.Pawn, PieceColor.White, new Vector2Int(i, 1));
@@ -55,7 +52,6 @@ public class BoardManager : Singeleton<BoardManager>
         // White Bishops
         PlacePiece(PieceType.Bishop, PieceColor.White, new Vector2Int(2, 0));
         PlacePiece(PieceType.Bishop, PieceColor.White, new Vector2Int(5, 0));
-
         // Black Bishops
         PlacePiece(PieceType.Bishop, PieceColor.Black, new Vector2Int(2, 7));
         PlacePiece(PieceType.Bishop, PieceColor.Black, new Vector2Int(5, 7));
@@ -63,12 +59,19 @@ public class BoardManager : Singeleton<BoardManager>
         // White Knights
         PlacePiece(PieceType.Knight, PieceColor.White, new Vector2Int(1, 0));
         PlacePiece(PieceType.Knight, PieceColor.White, new Vector2Int(6, 0));
-
         // Black Knights
         PlacePiece(PieceType.Knight, PieceColor.Black, new Vector2Int(1, 7));
         PlacePiece(PieceType.Knight, PieceColor.Black, new Vector2Int(6, 7));
 
-        // This is where similar code for Knights, Bishops, Queens, and Kings will be added.
+        // White Queens
+        PlacePiece(PieceType.Queen, PieceColor.White, new Vector2Int(3, 0));
+        // Black Queens
+        PlacePiece(PieceType.Queen, PieceColor.Black, new Vector2Int(3, 7));
+
+        // White Kings
+        PlacePiece(PieceType.King, PieceColor.White, new Vector2Int(4, 0));
+        // Black Kings
+        PlacePiece(PieceType.King, PieceColor.Black, new Vector2Int(4, 7));
     }
 
     // Bu metot, bir taşı verilen konuma yerleştirmekten sorumludur.
@@ -105,6 +108,12 @@ public class BoardManager : Singeleton<BoardManager>
                 break;
             case PieceType.Knight:
                 newPiece.SetMover(new KnightMover());
+                break;
+            case PieceType.Queen:
+                newPiece.SetMover(new QueenMover());
+                break;
+            case PieceType.King:
+                newPiece.SetMover(new KingMover());
                 break;
         }
         // Diğer taş türleri için de buraya else if'ler eklenecek.
