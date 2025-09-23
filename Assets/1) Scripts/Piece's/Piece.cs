@@ -52,6 +52,21 @@ public class Piece : MonoBehaviour, IPointerClickHandler
             Debug.LogError("Piece mover not set for " + pieceType);
             return false;
         }
-        return pieceMover.IsValidMove(currentPosition, targetPosition, board);
+        bool result = pieceMover.IsValidMove(currentPosition, targetPosition, board);
+        if (BoardManager.VerboseLogging)
+            Debug.Log($"[IsMoveValid] {pieceColor} {pieceType} {currentPosition} -> {targetPosition} = {result}");
+        return result;
+    }
+
+    // Checks whether this piece's movement pattern can attack the given square
+    // This intentionally does NOT simulate for self-check; it's movement-only (pseudo-legal).
+    public bool CanAttackSquare(Vector2Int targetPosition)
+    {
+        if (pieceMover == null)
+        {
+            Debug.LogError("Piece mover not set for " + pieceType);
+            return false;
+        }
+        return pieceMover.CanAttack(currentPosition, targetPosition, board);
     }
 }

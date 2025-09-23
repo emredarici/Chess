@@ -22,6 +22,17 @@ public class KnightMover : IPieceMover
         if (target != null && target.pieceColor == piece.pieceColor)
             return false;
 
+        if (board.SimulateMoveAndCheckSelfCheck(piece, to))
+            return false;
+        return true;
+    }
+
+    public bool CanAttack(Vector2Int from, Vector2Int to, BoardManager board)
+    {
+        int dx = Mathf.Abs(to.x - from.x);
+        int dy = Mathf.Abs(to.y - from.y);
+        if (!((dx == 2 && dy == 1) || (dx == 1 && dy == 2)))
+            return false;
         return true;
     }
 }

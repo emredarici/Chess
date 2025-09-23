@@ -1,5 +1,8 @@
-using UnityEngine;
+
+
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 public struct LastMoveInfo
 {
@@ -28,10 +31,40 @@ public class BoardManager : Singeleton<BoardManager>
 
     public LastMoveInfo lastMove;
 
+    // Toggle verbose debug logs for diagnosis. Set to true to enable detailed simulation/mover logs.
+    public static bool VerboseLogging = false;
+
+    // Performans için şahların CheckController referansları
+    private CheckController whiteKingCheck;
+    private CheckController blackKingCheck;
+
     void Start()
     {
         // Oyun başladığında tahtayı ilk konfigürasyonuna ayarla.
         SetupBoard();
+
+        // Şahların CheckController referanslarını al
+        var whiteKing = GetKingOfColor(PieceColor.White);
+        if (whiteKing != null)
+            whiteKingCheck = whiteKing.GetComponent<CheckController>();
+        var blackKing = GetKingOfColor(PieceColor.Black);
+        if (blackKing != null)
+            blackKingCheck = blackKing.GetComponent<CheckController>();
+    }
+
+    public List<Piece> GetAllPieces()
+    {
+        var PieceList = new List<Piece>();
+        for (int x = 0; x < 8; x++)
+        {
+            for (int y = 0; y < 8; y++)
+            {
+                Piece p = pieces[x, y];
+                if (p != null)
+                    PieceList.Add(p);
+            }
+        }
+        return PieceList;
     }
 
     void SetupBoard()
@@ -121,6 +154,33 @@ public class BoardManager : Singeleton<BoardManager>
         // Taşı, tahtanın 2D dizisinde doğru konuma yerleştirir.
         pieces[position.x, position.y] = newPiece;
     }
+
+    // Bir taş hamle ettikten sonra ilgili şah için şah kontrolü yapar.
+    public void CheckForCheck()
+    {
+        // Beyaz şah kontrolü
+        if (whiteKingCheck != null && whiteKingCheck.IsKingInCheck(this))
+        {
+            Debug.Log("Beyaz şah tehdit altında!");
+            if (whiteKingCheck.IsCheckmate(this))
+            {
+                Debug.Log("Beyaz mat oldu!");
+                // Oyun sonu işlemleri burada yapılabilir
+            }
+        }
+
+        // Siyah şah kontrolü
+        if (blackKingCheck != null && blackKingCheck.IsKingInCheck(this))
+        {
+            Debug.Log("Siyah şah tehdit altında!");
+            if (blackKingCheck.IsCheckmate(this))
+            {
+                Debug.Log("Siyah mat oldu!");
+                // Oyun sonu işlemleri burada yapılabilir
+            }
+        }
+    }
+
 
     // Verilen konumdaki taşı döndürür. Eğer kare boşsa null döndürür.
     public Piece GetPiece(Vector2Int position)
@@ -249,5 +309,60 @@ public class BoardManager : Singeleton<BoardManager>
         Debug.Log(piece.pieceColor + " " + piece.pieceType + " taşını " + fromPosition + " -> " + newPosition + " konumuna hareket ettirdi.");
 
         PieceMoved?.Invoke(lastMove);
+        // Her hamle sonrası şah kontrolü
+        CheckForCheck();
+    }
+
+
+    public bool SimulateMoveAndCheckSelfCheck(Piece piece, Vector2Int targetPosition)
+    {
+        Vector2Int originalPosition = piece.currentPosition;
+        Piece capturedPiece = GetPiece(targetPosition);
+
+        // lastMove'u geçici olarak sakla
+        var lastMoveBackup = lastMove;
+
+        if (VerboseLogging)
+            Debug.Log($"[SimulateMoveAndCheckSelfCheck] Simülasyon başlıyor: {piece.pieceColor} {piece.pieceType} {originalPosition} -> {targetPosition}");
+
+        pieces[originalPosition.x, originalPosition.y] = null;
+        pieces[targetPosition.x, targetPosition.y] = piece;
+        piece.currentPosition = targetPosition;
+
+        // Simülasyon sırasında lastMove'u güncelleme! (en passant gibi kontrollerde yanlışlık olmasın)
+
+        Piece king = GetKingOfColor(piece.pieceColor);
+        bool isInCheck = false;
+        if (king != null)
+        {
+            var checkController = king.GetComponent<CheckController>();
+            if (checkController != null)
+                isInCheck = checkController.IsKingInCheck(this);
+        }
+
+        // Taşları ve pozisyonu geri al
+        piece.currentPosition = originalPosition;
+        pieces[originalPosition.x, originalPosition.y] = piece;
+        pieces[targetPosition.x, targetPosition.y] = capturedPiece;
+
+        // lastMove'u geri yükle
+        lastMove = lastMoveBackup;
+
+        if (VerboseLogging)
+            Debug.Log($"[SimulateMoveAndCheckSelfCheck] Sonuç: {piece.pieceColor} {piece.pieceType} {originalPosition} -> {targetPosition} | isInCheck={isInCheck}");
+
+        return isInCheck;
+    }
+
+    public Piece GetKingOfColor(PieceColor color)
+    {
+        foreach (var piece in pieces)
+        {
+            if (piece != null && piece.pieceType == PieceType.King && piece.pieceColor == color)
+            {
+                return piece;
+            }
+        }
+        return null;
     }
 }
