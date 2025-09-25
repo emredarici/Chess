@@ -11,40 +11,30 @@ public struct LastMoveInfo
     public bool wasDoublePawnMove;
 }
 
-// Bu sınıf, oyun tahtasının yönetiminden sorumludur.
-// Taşların hareket kurallarını bilmesine gerek yoktur, sadece tahtadaki
-// taşların konumunu ve durumunu yönetir.
 public class BoardManager : Singeleton<BoardManager>
 {
-    // Event fired after a piece move is applied. Listeners can show indicators, sounds, etc.
     public static Action<LastMoveInfo> PieceMoved;
     public static Action<Piece> PromoteRequested;
 
-    // Tahtanın 8x8'lik yapısını temsil eden 2D dizi.
-    // Her bir hücre, o karede bulunan Piece nesnesini (taşı) tutar.
+
     public Piece[,] pieces = new Piece[8, 8];
 
-    // Bu, tahta üzerinde kullanılacak tüm taş prefab'lerinin listesidir.
-    // Unity Inspector penceresinden bu listeyi doldurmalısın.
+
     public GameObject[] piecePrefabs;
 
     public LastMoveInfo lastMove;
 
-    // Toggle verbose debug logs for diagnosis. Set to true to enable detailed simulation/mover logs.
     public static bool VerboseLogging = false;
 
-    // Performans için şahların CheckController referansları
     private CheckController whiteKingCheck;
     private CheckController blackKingCheck;
-    // SOLID: Sadece pozisyon stringi üretir, tekrarları ayrı class takip eder
+
     private RepetitionTracker repetitionTracker = new RepetitionTracker();
 
     void Start()
     {
-        // Oyun başladığında tahtayı ilk konfigürasyonuna ayarla.
         SetupBoard();
 
-        // Şahların CheckController referanslarını al
         var whiteKing = GetKingOfColor(PieceColor.White);
         if (whiteKing != null)
             whiteKingCheck = whiteKing.GetComponent<CheckController>();
@@ -108,8 +98,6 @@ public class BoardManager : Singeleton<BoardManager>
         PlacePiece(PieceType.King, PieceColor.Black, new Vector2Int(4, 7));
     }
 
-    // Bu metot, bir taşı verilen konuma yerleştirmekten sorumludur.
-    // Taşı oluşturur, verilerini atar ve tahtanın 2D dizisine ekler.
     public void PlacePiece(PieceType type, PieceColor color, Vector2Int position)
     {
         // piecePrefabs dizisinden doğru prefab'i bulur.
@@ -301,6 +289,29 @@ public class BoardManager : Singeleton<BoardManager>
         // Mark that this piece has moved (useful for pawn double-step and castling logic)
         piece.hasMoved = true;
 
+        // Eğer hareket eden şah ise ve iki kare yatay hareket ettiyse, bu bir rok hareketidir - kaleyi de taşı
+        if (piece.pieceType == PieceType.King && Mathf.Abs(newPosition.x - fromPosition.x) == 2)
+        {
+            int direction = newPosition.x - fromPosition.x; // +2 = kısa rok, -2 = uzun rok
+            int rookFromX = direction > 0 ? 7 : 0;
+            int rookToX = fromPosition.x + (direction > 0 ? 1 : -1);
+            Vector2Int rookFrom = new Vector2Int(rookFromX, fromPosition.y);
+            Vector2Int rookTo = new Vector2Int(rookToX, fromPosition.y);
+            Piece rook = GetPiece(rookFrom);
+            if (rook != null && rook.pieceType == PieceType.Rook && !rook.hasMoved)
+            {
+                // Tahtadaki referansları güncelle
+                pieces[rookFrom.x, rookFrom.y] = null;
+                pieces[rookTo.x, rookTo.y] = rook;
+                // Rook'un pozisyonunu ve görselini güncelle
+                rook.currentPosition = rookTo;
+                rook.transform.position = GetWorldPosition(rookTo);
+                rook.hasMoved = true;
+
+                Debug.Log(rook.pieceColor + " Rook moved for castling: " + rookFrom + " -> " + rookTo);
+            }
+        }
+
         if (piece.pieceType == PieceType.Pawn && (newPosition.y == 0 || newPosition.y == 7))
         {
             PromoteRequested?.Invoke(piece);
@@ -431,7 +442,7 @@ public class BoardManager : Singeleton<BoardManager>
         sb.Append(' ');
         sb.Append(TurnManager.currentTurn == PieceColor.White ? 'w' : 'b');
 
-        // Rooking rights
+        // Castling rights
         sb.Append(' ');
         string castling = "";
         // White
@@ -471,6 +482,18 @@ public class BoardManager : Singeleton<BoardManager>
         sb.Append(enp);
 
         return sb.ToString();
+    }
+
+    public bool IsSquareUnderAttack(Vector2Int square, PieceColor byColor)
+    {
+        foreach (var piece in GetAllPieces())
+        {
+            if (piece.pieceColor == byColor && piece.CanAttack(square, this))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

@@ -69,4 +69,14 @@ public class Piece : MonoBehaviour, IPointerClickHandler
         }
         return pieceMover.CanAttack(currentPosition, targetPosition, board);
     }
+
+    public bool CanAttack(Vector2Int targetPosition, BoardManager board)
+    {
+        if (pieceMover == null)
+        {
+            Debug.LogError("Piece mover not set for " + pieceType);
+            return false;
+        }
+        return pieceMover.CanAttack(currentPosition, targetPosition, board);
+    }
 }
