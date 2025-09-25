@@ -1,6 +1,5 @@
-
-
 using System;
+using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -37,6 +36,8 @@ public class BoardManager : Singeleton<BoardManager>
     // Performans için şahların CheckController referansları
     private CheckController whiteKingCheck;
     private CheckController blackKingCheck;
+    // SOLID: Sadece pozisyon stringi üretir, tekrarları ayrı class takip eder
+    private RepetitionTracker repetitionTracker = new RepetitionTracker();
 
     void Start()
     {
@@ -311,6 +312,16 @@ public class BoardManager : Singeleton<BoardManager>
         PieceMoved?.Invoke(lastMove);
         // Her hamle sonrası şah kontrolü
         CheckForCheck();
+
+        // Eğer sadece iki şah kaldıysa (yetersiz materyal) oyunu berabere ilan et
+        if (IsOnlyKingsRemaining())
+        {
+            Debug.Log("Draw: Only kings remaining (insufficient mating material).");
+            // Burada oyun bitirme / UI gösterme çağrısı yapılabilir.
+        }
+
+        string positionKey = GetPositionKey();
+        repetitionTracker.RecordPosition(positionKey);
     }
 
 
@@ -365,4 +376,101 @@ public class BoardManager : Singeleton<BoardManager>
         }
         return null;
     }
+
+    // Returns true when the only pieces left on the board are the two kings.
+    public bool IsOnlyKingsRemaining()
+    {
+        var all = GetAllPieces();
+        if (all.Count != 2)
+            return false;
+
+        return all[0].pieceType == PieceType.King && all[1].pieceType == PieceType.King;
+    }
+
+    private string GetPositionKey()
+    {
+        StringBuilder sb = new StringBuilder();
+        // Pieces
+        for (int y = 7; y >= 0; y--)
+        {
+            int emptyCount = 0;
+            for (int x = 0; x < 8; x++)
+            {
+                var p = pieces[x, y];
+                if (p == null)
+                {
+                    emptyCount++;
+                }
+                else
+                {
+                    if (emptyCount > 0)
+                    {
+                        sb.Append(emptyCount);
+                        emptyCount = 0;
+                    }
+                    char c = '?';
+                    switch (p.pieceType)
+                    {
+                        case PieceType.King: c = 'k'; break;
+                        case PieceType.Queen: c = 'q'; break;
+                        case PieceType.Rook: c = 'r'; break;
+                        case PieceType.Bishop: c = 'b'; break;
+                        case PieceType.Knight: c = 'n'; break;
+                        case PieceType.Pawn: c = 'p'; break;
+                    }
+                    if (p.pieceColor == PieceColor.White)
+                        c = char.ToUpper(c);
+                    sb.Append(c);
+                }
+            }
+            if (emptyCount > 0)
+                sb.Append(emptyCount);
+            if (y > 0) sb.Append('/');
+        }
+        // Turn
+        sb.Append(' ');
+        sb.Append(TurnManager.currentTurn == PieceColor.White ? 'w' : 'b');
+
+        // Rooking rights
+        sb.Append(' ');
+        string castling = "";
+        // White
+        Piece wKing = GetKingOfColor(PieceColor.White);
+        if (wKing != null && !wKing.hasMoved)
+        {
+            var a1 = GetPiece(new Vector2Int(0, 0));
+            if (a1 != null && a1.pieceType == PieceType.Rook && !a1.hasMoved && a1.pieceColor == PieceColor.White)
+                castling += 'Q';
+            var h1 = GetPiece(new Vector2Int(7, 0));
+            if (h1 != null && h1.pieceType == PieceType.Rook && !h1.hasMoved && h1.pieceColor == PieceColor.White)
+                castling += 'K';
+        }
+        // Black
+        Piece bKing = GetKingOfColor(PieceColor.Black);
+        if (bKing != null && !bKing.hasMoved)
+        {
+            var a8 = GetPiece(new Vector2Int(0, 7));
+            if (a8 != null && a8.pieceType == PieceType.Rook && !a8.hasMoved && a8.pieceColor == PieceColor.Black)
+                castling += 'q';
+            var h8 = GetPiece(new Vector2Int(7, 7));
+            if (h8 != null && h8.pieceType == PieceType.Rook && !h8.hasMoved && h8.pieceColor == PieceColor.Black)
+                castling += 'k';
+        }
+        if (castling == "") castling = "-";
+        sb.Append(castling);
+
+        // En passant
+        sb.Append(' ');
+        string enp = "-";
+        if (lastMove.piece != null && lastMove.piece.pieceType == PieceType.Pawn && lastMove.wasDoublePawnMove)
+        {
+            int ex = lastMove.to.x;
+            int ey = (lastMove.from.y + lastMove.to.y) / 2;
+            enp = ((char)('a' + ex)).ToString() + (ey + 1).ToString();
+        }
+        sb.Append(enp);
+
+        return sb.ToString();
+    }
+
 }
