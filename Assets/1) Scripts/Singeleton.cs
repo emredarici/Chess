@@ -9,12 +9,8 @@ public class Singeleton<T> : MonoBehaviour where T : MonoBehaviour
         {
             if (_instance == null)
             {
-                _instance = Object.FindFirstObjectByType<T>();
-                if (_instance == null)
-                {
-                    GameObject singletonObj = new GameObject(typeof(T).Name);
-                    _instance = singletonObj.AddComponent<T>();
-                }
+                // Sahnede varsa bul
+                _instance = FindAnyObjectByType<T>();
             }
             return _instance;
         }
@@ -25,9 +21,11 @@ public class Singeleton<T> : MonoBehaviour where T : MonoBehaviour
         if (_instance == null)
         {
             _instance = this as T;
+            Debug.Log($"[Singleton] Created instance of {typeof(T).Name} on {gameObject.name}");
         }
         else if (_instance != this)
         {
+            Debug.LogWarning($"[Singleton] Duplicate {typeof(T).Name} on {gameObject.name}, destroying this one.");
             Destroy(gameObject);
         }
     }

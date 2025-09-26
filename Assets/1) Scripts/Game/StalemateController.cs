@@ -65,6 +65,6 @@ public class StalemateController : MonoBehaviour
 
         // No legal moves and king not in check -> stalemate
         Debug.Log("Stalemate (pat) detected for " + color);
-        // Optional: trigger game-over UI or logic here.
+        GameManager.Instance.TriggerNoLegalMoves();
     }
 }

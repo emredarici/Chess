@@ -6,6 +6,11 @@ public static class TurnManager
     public static PieceColor currentTurn = PieceColor.White;
     public static Action<PieceColor> onTurnChanged;
 
+    public static void ResetTurn()
+    {
+        currentTurn = PieceColor.White;
+    }
+
     public static void SwitchTurn()
     {
         currentTurn = (currentTurn == PieceColor.White) ? PieceColor.Black : PieceColor.White;

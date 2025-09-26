@@ -7,7 +7,6 @@ public class RepetitionTracker
     private Dictionary<string, int> positionCounts = new Dictionary<string, int>();
     private const int MaxPositions = 500;
 
-    public static Action OnThreefoldRepetition;
 
     public void RecordPosition(string positionKey)
     {
@@ -19,7 +18,7 @@ public class RepetitionTracker
         if (positionCounts[positionKey] >= 3)
         {
             Debug.Log("Threefold repetition - draw");
-            OnThreefoldRepetition?.Invoke();
+            GameManager.Instance.TriggerThirdRepetition();
         }
 
         if (positionCounts.Count > MaxPositions)

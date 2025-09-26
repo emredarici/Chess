@@ -157,7 +157,7 @@ public class BoardManager : Singeleton<BoardManager>
             if (whiteKingCheck.IsCheckmate(this))
             {
                 Debug.Log("Beyaz mat oldu!");
-                // Oyun sonu işlemleri burada yapılabilir
+                GameManager.Instance.TriggerCheckmate(PieceColor.Black);
             }
         }
 
@@ -168,7 +168,7 @@ public class BoardManager : Singeleton<BoardManager>
             if (blackKingCheck.IsCheckmate(this))
             {
                 Debug.Log("Siyah mat oldu!");
-                // Oyun sonu işlemleri burada yapılabilir
+                GameManager.Instance.TriggerCheckmate(PieceColor.White);
             }
         }
     }
@@ -331,7 +331,7 @@ public class BoardManager : Singeleton<BoardManager>
         if (IsOnlyKingsRemaining())
         {
             Debug.Log("Draw: Only kings remaining (insufficient mating material).");
-            // Burada oyun bitirme / UI gösterme çağrısı yapılabilir.
+            GameManager.Instance.TriggerOnly2Kings();
         }
 
         string positionKey = GetPositionKey();
