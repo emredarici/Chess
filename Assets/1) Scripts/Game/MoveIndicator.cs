@@ -8,6 +8,8 @@ public class MoveIndicator : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (!GameManager.Instance.IsModeSet)
+            return;
         PieceSelectionManager.Instance.TryMoveSelectedPiece(gridPosition);
     }
 }

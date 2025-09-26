@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,6 +8,10 @@ public class PromoteController : MonoBehaviour
 
     public PieceType SelectType;
     private Piece _pendingPawn;
+
+    public List<SpriteRenderer> promoteOptionRenderers; // 0: Queen, 1: Rook, 2: Bishop, 3: Knight
+    public List<Sprite> whitePieceSprites; // 0: Queen, 1: Rook, 2: Bishop, 3: Knight
+    public List<Sprite> blackPieceSprites; // 0: Queen, 1: Rook, 2: Bishop, 3: Knight
 
     public void SetTypeToQueen() { SelectType = PieceType.Queen; }
     public void SetTypeToRook() { SelectType = PieceType.Rook; }
@@ -32,6 +37,21 @@ public class PromoteController : MonoBehaviour
     {
         _pendingPawn = pawn;
         promotePanel.SetActive(true);
+        promotePanel.transform.position = new Vector3(promotePanel.transform.position.x, pawn.currentPosition.y, promotePanel.transform.position.z);
+        if (pawn.pieceColor == PieceColor.White)
+        {
+            for (int i = 0; i < promoteOptionRenderers.Count; i++)
+            {
+                promoteOptionRenderers[i].sprite = whitePieceSprites[i];
+            }
+        }
+        else
+        {
+            for (int i = 0; i < promoteOptionRenderers.Count; i++)
+            {
+                promoteOptionRenderers[i].sprite = blackPieceSprites[i];
+            }
+        }
     }
 
     public void PromotePawn()

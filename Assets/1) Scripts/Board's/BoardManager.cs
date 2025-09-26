@@ -11,6 +11,9 @@ public struct LastMoveInfo
     public bool wasDoublePawnMove;
 }
 
+//White square color code #EBECD0
+//Black square color code #739552
+
 public class BoardManager : Singeleton<BoardManager>
 {
     public static Action<LastMoveInfo> PieceMoved;

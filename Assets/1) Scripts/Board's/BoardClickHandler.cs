@@ -8,6 +8,8 @@ public class BoardClickHandler : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (!GameManager.Instance.IsModeSet)
+            return;
         onBoardClicked?.Invoke();
     }
 }

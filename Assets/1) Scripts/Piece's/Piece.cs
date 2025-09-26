@@ -14,6 +14,8 @@ public class Piece : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (!GameManager.Instance.IsModeSet)
+            return;
         Debug.Log($"{pieceType} tıklandı: {currentPosition}");
 
         // If another piece is already selected and it is not this piece,
