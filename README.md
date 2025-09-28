@@ -76,19 +76,6 @@ The AI uses the Minimax algorithm with the following features:
 - **UI Buttons**: Select game mode (Player vs Player / Player vs AI)
 - **Promotion**: Click on desired piece when pawn reaches end rank (player only)
 
-## Future Enhancements
-
-- Opening book database
-- Endgame tablebase integration
-- Advanced position evaluation (piece-square tables)
-- Iterative deepening
-- Transposition tables
-- Time management system
-- Online multiplayer support
-
-## Contributing
-
-Feel free to submit issues and enhancement requests!
 
 ## License
 
