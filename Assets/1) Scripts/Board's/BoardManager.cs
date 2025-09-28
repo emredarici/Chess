@@ -103,22 +103,15 @@ public class BoardManager : Singeleton<BoardManager>
 
     public void PlacePiece(PieceType type, PieceColor color, Vector2Int position)
     {
-        // piecePrefabs dizisinden doğru prefab'i bulur.
         GameObject piecePrefab = FindPiecePrefab(type, color);
-        // Prefab'den bir kopya oluşturur ve onu doğru dünya koordinatına yerleştirir.
         GameObject newPieceObject = Instantiate(piecePrefab, GetWorldPosition(position), Quaternion.identity);
 
-        // Yeni oluşturulan nesnedeki Piece bileşenini alır.
         Piece newPiece = newPieceObject.GetComponent<Piece>();
-        // Piece bileşeninin verilerini ayarlar.
         newPiece.pieceColor = color;
         newPiece.pieceType = type;
         newPiece.currentPosition = position;
-        // Piece nesnesine BoardManager referansını atar, böylece Piece tahta hakkında bilgi alabilir.
         newPiece.board = this;
 
-        // SOLID: Burada, taşa kendi hareket mantığını atıyoruz.
-        // Yeni taş türü eklemek için sadece buraya yeni bir else if ekle.
 
         switch (type)
         {
@@ -141,16 +134,12 @@ public class BoardManager : Singeleton<BoardManager>
                 newPiece.SetMover(new KingMover());
                 break;
         }
-        // Diğer taş türleri için de buraya else if'ler eklenecek.
 
-        // Taşı, tahtanın 2D dizisinde doğru konuma yerleştirir.
         pieces[position.x, position.y] = newPiece;
     }
 
-    // Bir taş hamle ettikten sonra ilgili şah için şah kontrolü yapar.
     public void CheckForCheck()
     {
-        // Beyaz şah kontrolü
         if (whiteKingCheck != null && whiteKingCheck.IsKingInCheck(this))
         {
             Debug.Log("Beyaz şah tehdit altında!");
@@ -161,7 +150,6 @@ public class BoardManager : Singeleton<BoardManager>
             }
         }
 
-        // Siyah şah kontrolü
         if (blackKingCheck != null && blackKingCheck.IsKingInCheck(this))
         {
             Debug.Log("Siyah şah tehdit altında!");
@@ -173,8 +161,6 @@ public class BoardManager : Singeleton<BoardManager>
         }
     }
 
-
-    // Verilen konumdaki taşı döndürür. Eğer kare boşsa null döndürür.
     public Piece GetPiece(Vector2Int position)
     {
         if (position.x >= 0 && position.x < 8 && position.y >= 0 && position.y < 8)
@@ -184,54 +170,41 @@ public class BoardManager : Singeleton<BoardManager>
         return null;
     }
 
-    // Tahta koordinatlarını (örn: 0,0), Unity'deki sahne koordinatlarına dönüştürür.
     public Vector3 GetWorldPosition(Vector2Int position)
     {
-        // Bu kısım, tahta objesinin ve kameranın konumuna göre ayarlanmalıdır.
-        // Örnek: Tahtanın sol alt köşesi (0,0) olsun ve kareler 1 birim büyüklüğünde olsun.
         return new Vector3(position.x, position.y, 0);
     }
 
-    // piecePrefabs dizisinde ilgili taşın prefab'ini bulur.
     private GameObject FindPiecePrefab(PieceType type, PieceColor color)
     {
-        // Öncelikle piecePrefabs listesinin boş olup olmadığını kontrol edelim.
         if (piecePrefabs == null || piecePrefabs.Length == 0)
         {
             Debug.LogError("Piece Prefabs listesi BoardManager'da boş! Lütfen prefab'leri ekleyin.");
             return null;
         }
 
-        // Beklenen prefab ismini oluşturalım. Örneğin: "Pawn_White", "Pawn_Black".
         string desiredPrefabName = type.ToString() + "_" + color.ToString();
 
-        // piecePrefabs listesindeki tüm prefab'leri kontrol edelim.
         foreach (GameObject prefab in piecePrefabs)
         {
-            // Eğer bir prefab'in adı, aradığımız isimle eşleşiyorsa, o prefab'i döndür.
             if (prefab != null && prefab.name == desiredPrefabName)
             {
                 return prefab;
             }
         }
 
-        // Eğer istenen prefab listede bulunamazsa hata mesajı logla.
         Debug.LogError("Prefab bulunamadı: " + desiredPrefabName + ". Lütfen BoardManager'daki Piece Prefabs listesini kontrol edin.");
         return null;
     }
 
-    // YENİ EKLENEN METOT: Bir taşın sahnedeki yeni konumuna yerleştirilmesini yönetir.
     public void OnPieceDropped(Piece piece, Vector2Int newPosition)
     {
-        // Capture the original position before any mutation
         Vector2Int fromPosition = piece.currentPosition;
 
 
-        // EN PASSANT: Eğer piyon çapraz boş kareye gidiyorsa ve lastMove'da iki kare ilerlemiş bir piyon hemen yanında ise, o piyonu sil.
         bool enPassantCapture = false;
         if (piece.pieceType == PieceType.Pawn && Mathf.Abs(newPosition.x - fromPosition.x) == 1 && newPosition.y != fromPosition.y)
         {
-            // Hedef karede taş yoksa, ama lastMove'da iki kare ilerlemiş bir piyon hemen yanımızda ise
             Piece targetPiece = GetPiece(newPosition);
             if (targetPiece == null)
             {
@@ -243,7 +216,6 @@ public class BoardManager : Singeleton<BoardManager>
                     last.to.x == newPosition.x &&
                     last.piece.pieceColor != piece.pieceColor)
                 {
-                    // Rakip piyonun bulunduğu kareyi sil
                     Piece capturedPawn = GetPiece(new Vector2Int(newPosition.x, fromPosition.y));
                     if (capturedPawn != null && capturedPawn.pieceType == PieceType.Pawn && capturedPawn.pieceColor != piece.pieceColor)
                     {
@@ -255,31 +227,26 @@ public class BoardManager : Singeleton<BoardManager>
             }
         }
 
-        // Normal taş alma (veya en passant değilse)
         if (!enPassantCapture)
         {
             Piece targetPiece = GetPiece(newPosition);
             if (targetPiece != null && targetPiece.pieceColor != piece.pieceColor)
             {
-                Destroy(targetPiece.gameObject); // Unity sahnesinden obje olarak kaldır.
-                pieces[newPosition.x, newPosition.y] = null; // clear board reference
+                Destroy(targetPiece.gameObject);
+                pieces[newPosition.x, newPosition.y] = null;
             }
         }
 
-        // Remove piece from its current square on the board array (safety check)
         if (pieces[fromPosition.x, fromPosition.y] == piece)
         {
             pieces[fromPosition.x, fromPosition.y] = null;
         }
 
-        // Place the piece into the new square (board array)
         pieces[newPosition.x, newPosition.y] = piece;
 
-        // Update piece's internal position and visual transform
         piece.currentPosition = newPosition;
         piece.transform.position = GetWorldPosition(newPosition);
 
-        // Compute whether this move was a double pawn move (based on fromPosition)
         bool wasDouble = (piece.pieceType == PieceType.Pawn) && Mathf.Abs(newPosition.y - fromPosition.y) == 2;
         lastMove = new LastMoveInfo
         {
@@ -289,10 +256,8 @@ public class BoardManager : Singeleton<BoardManager>
             wasDoublePawnMove = wasDouble
         };
 
-        // Mark that this piece has moved (useful for pawn double-step and castling logic)
         piece.hasMoved = true;
 
-        // Eğer hareket eden şah ise ve iki kare yatay hareket ettiyse, bu bir rok hareketidir - kaleyi de taşı
         if (piece.pieceType == PieceType.King && Mathf.Abs(newPosition.x - fromPosition.x) == 2)
         {
             int direction = newPosition.x - fromPosition.x; // +2 = kısa rok, -2 = uzun rok
@@ -303,10 +268,8 @@ public class BoardManager : Singeleton<BoardManager>
             Piece rook = GetPiece(rookFrom);
             if (rook != null && rook.pieceType == PieceType.Rook && !rook.hasMoved)
             {
-                // Tahtadaki referansları güncelle
                 pieces[rookFrom.x, rookFrom.y] = null;
                 pieces[rookTo.x, rookTo.y] = rook;
-                // Rook'un pozisyonunu ve görselini güncelle
                 rook.currentPosition = rookTo;
                 rook.transform.position = GetWorldPosition(rookTo);
                 rook.hasMoved = true;
@@ -324,10 +287,8 @@ public class BoardManager : Singeleton<BoardManager>
         Debug.Log(piece.pieceColor + " " + piece.pieceType + " taşını " + fromPosition + " -> " + newPosition + " konumuna hareket ettirdi.");
 
         PieceMoved?.Invoke(lastMove);
-        // Her hamle sonrası şah kontrolü
         CheckForCheck();
 
-        // Eğer sadece iki şah kaldıysa (yetersiz materyal) oyunu berabere ilan et
         if (IsOnlyKingsRemaining())
         {
             Debug.Log("Draw: Only kings remaining (insufficient mating material).");
@@ -344,7 +305,6 @@ public class BoardManager : Singeleton<BoardManager>
         Vector2Int originalPosition = piece.currentPosition;
         Piece capturedPiece = GetPiece(targetPosition);
 
-        // lastMove'u geçici olarak sakla
         var lastMoveBackup = lastMove;
 
         if (VerboseLogging)
@@ -354,7 +314,6 @@ public class BoardManager : Singeleton<BoardManager>
         pieces[targetPosition.x, targetPosition.y] = piece;
         piece.currentPosition = targetPosition;
 
-        // Simülasyon sırasında lastMove'u güncelleme! (en passant gibi kontrollerde yanlışlık olmasın)
 
         Piece king = GetKingOfColor(piece.pieceColor);
         bool isInCheck = false;
@@ -365,12 +324,10 @@ public class BoardManager : Singeleton<BoardManager>
                 isInCheck = checkController.IsKingInCheck(this);
         }
 
-        // Taşları ve pozisyonu geri al
         piece.currentPosition = originalPosition;
         pieces[originalPosition.x, originalPosition.y] = piece;
         pieces[targetPosition.x, targetPosition.y] = capturedPiece;
 
-        // lastMove'u geri yükle
         lastMove = lastMoveBackup;
 
         if (VerboseLogging)
@@ -391,7 +348,6 @@ public class BoardManager : Singeleton<BoardManager>
         return null;
     }
 
-    // Returns true when the only pieces left on the board are the two kings.
     public bool IsOnlyKingsRemaining()
     {
         var all = GetAllPieces();
@@ -445,7 +401,6 @@ public class BoardManager : Singeleton<BoardManager>
         sb.Append(' ');
         sb.Append(TurnManager.currentTurn == PieceColor.White ? 'w' : 'b');
 
-        // Castling rights
         sb.Append(' ');
         string castling = "";
         // White
@@ -459,7 +414,6 @@ public class BoardManager : Singeleton<BoardManager>
             if (h1 != null && h1.pieceType == PieceType.Rook && !h1.hasMoved && h1.pieceColor == PieceColor.White)
                 castling += 'K';
         }
-        // Black
         Piece bKing = GetKingOfColor(PieceColor.Black);
         if (bKing != null && !bKing.hasMoved)
         {

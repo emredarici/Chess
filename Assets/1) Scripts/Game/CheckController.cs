@@ -23,7 +23,6 @@ public class CheckController : MonoBehaviour
         {
             if (piece.pieceColor != thisKing.pieceColor)
             {
-                // Use movement-only attack check to avoid recursive self-check simulation
                 if (piece.CanAttackSquare(kingPosition))
                 {
                     Debug.Log($"{thisKing.pieceColor} şahı tehdit altında!");

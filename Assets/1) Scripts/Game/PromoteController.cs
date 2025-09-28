@@ -9,9 +9,9 @@ public class PromoteController : MonoBehaviour
     public PieceType SelectType;
     private Piece _pendingPawn;
 
-    public List<SpriteRenderer> promoteOptionRenderers; // 0: Queen, 1: Rook, 2: Bishop, 3: Knight
-    public List<Sprite> whitePieceSprites; // 0: Queen, 1: Rook, 2: Bishop, 3: Knight
-    public List<Sprite> blackPieceSprites; // 0: Queen, 1: Rook, 2: Bishop, 3: Knight
+    public List<SpriteRenderer> promoteOptionRenderers;
+    public List<Sprite> whitePieceSprites;
+    public List<Sprite> blackPieceSprites;
 
     public void SetTypeToQueen() { SelectType = PieceType.Queen; }
     public void SetTypeToRook() { SelectType = PieceType.Rook; }
@@ -35,6 +35,16 @@ public class PromoteController : MonoBehaviour
 
     public void ShowPromotePanel(Piece pawn)
     {
+        if (pawn == null) return;
+        if (GameManager.Instance != null
+            && GameManager.Instance.currentGameMode == GameMode.PlayervsAI
+            && pawn.pieceColor == GameManager.Instance.aiColor)
+        {
+            _pendingPawn = null;
+            if (promotePanel != null) promotePanel.SetActive(false);
+            return;
+        }
+
         _pendingPawn = pawn;
         promotePanel.SetActive(true);
         promotePanel.transform.position = new Vector3(promotePanel.transform.position.x, pawn.currentPosition.y, promotePanel.transform.position.z);
@@ -63,10 +73,9 @@ public class PromoteController : MonoBehaviour
         Destroy(_pendingPawn.gameObject);
         BoardManager.Instance.PlacePiece(SelectType, color, pos);
 
-        // lastMove'u güncelle ve PieceMoved eventini tetikle
         BoardManager.Instance.lastMove = new LastMoveInfo
         {
-            from = pos, // Terfi anında from ve to aynı karede olur
+            from = pos,
             to = pos,
             piece = BoardManager.Instance.GetPiece(pos),
             wasDoublePawnMove = false

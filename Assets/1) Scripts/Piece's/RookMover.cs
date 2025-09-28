@@ -6,11 +6,9 @@ public class RookMover : IPieceMover
     {
         if (BoardManager.VerboseLogging)
             Debug.Log($"[Rook.IsValidMove] Checking {from} -> {to}");
-        // Sadece yatay veya dikey hareket
         if (from.x != to.x && from.y != to.y)
             return false;
 
-        // Hedef pozisyon aynıysa geçersiz
         if (from == to)
             return false;
 
@@ -26,7 +24,6 @@ public class RookMover : IPieceMover
 
         int x = from.x + stepX;
         int y = from.y + stepY;
-        // Hedef kareye kadar aradaki tüm karelerde taş var mı kontrol et
         while (x != to.x || y != to.y)
         {
             if (board.GetPiece(new Vector2Int(x, y)) != null)
@@ -35,7 +32,6 @@ public class RookMover : IPieceMover
             y += stepY;
         }
 
-        // Hedef karede kendi taşı varsa gidemez
         Piece target = board.GetPiece(to);
         if (target != null && target.pieceColor == piece.pieceColor)
             return false;

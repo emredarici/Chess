@@ -40,10 +40,7 @@ public class PieceSelectionManager : Singeleton<PieceSelectionManager>
 
         if (selectedPiece.IsMoveValid(targetGridPosition))
         {
-            // Hareket geçerliyse, BoardManager'a taşı hareket ettirmesini söyle.
             selectedPiece.board.OnPieceDropped(selectedPiece, targetGridPosition);
-
-            // Eğer piyon terfi paneli açıldıysa turn değişimi yapılmasın
             bool promotionPending = false;
             if (selectedPiece.pieceType == PieceType.Pawn)
             {
@@ -54,17 +51,15 @@ public class PieceSelectionManager : Singeleton<PieceSelectionManager>
                 }
             }
 
-            selectedPiece = null; // Taşı hareket ettirdikten sonra seçimi kaldır.
-            ClearIndicators(); // Belirteçleri temizle.
-
+            selectedPiece = null;
+            ClearIndicators();
             if (!promotionPending)
             {
-                TurnManager.SwitchTurn(); // Sadece terfi yoksa sırayı değiştir
+                TurnManager.SwitchTurn();
             }
         }
         else
         {
-            // Hareket geçersizse, seçimi iptal et ve belirteçleri temizle.
             Debug.Log("Geçersiz hareket denemesi.");
             selectedPiece = null;
             ClearIndicators();
@@ -73,36 +68,29 @@ public class PieceSelectionManager : Singeleton<PieceSelectionManager>
 
     private void ShowValidMoves(Piece piece)
     {
-        // Tahtadaki tüm kareleri kontrol et.
         for (int x = 0; x < 8; x++)
         {
             for (int y = 0; y < 8; y++)
             {
                 Vector2Int targetPos = new Vector2Int(x, y);
 
-                // Eğer taş bu kareye hareket edebiliyorsa...
                 if (piece.IsMoveValid(targetPos))
                 {
-                    // Belirteç objesini oluştur.
                     GameObject indicator = Instantiate(moveIndicatorPrefab, indicatorsParent);
-                    // Belirteci doğru dünya koordinatına yerleştir.
                     indicator.transform.position = piece.board.GetWorldPosition(targetPos);
 
-                    // Belirtecin de hangi grid pozisyonunda olduğunu bilmesi için
-                    // ona bir script ekleyebiliriz. (Aşağıda açıklanacak)
                     MoveIndicator indicatorScript = indicator.GetComponent<MoveIndicator>();
                     if (indicatorScript != null)
                     {
                         indicatorScript.gridPosition = targetPos;
                     }
 
-                    activeIndicators.Add(indicator); // Listeye ekle ki sonra temizleyebilelim.
+                    activeIndicators.Add(indicator);
                 }
             }
         }
     }
 
-    // Oluşturulan tüm hareket belirteçlerini yok eder.
     public void ClearIndicators()
     {
         foreach (GameObject indicator in activeIndicators)

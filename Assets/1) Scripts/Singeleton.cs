@@ -9,7 +9,6 @@ public class Singeleton<T> : MonoBehaviour where T : MonoBehaviour
         {
             if (_instance == null)
             {
-                // Sahnede varsa bul
                 _instance = FindAnyObjectByType<T>();
             }
             return _instance;

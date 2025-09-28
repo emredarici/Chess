@@ -16,7 +16,6 @@ public class QueenMover : IPieceMover
         int dx = Mathf.Abs(to.x - from.x);
         int dy = Mathf.Abs(to.y - from.y);
 
-        // Queen hem yatay/dikey hem de çapraz gidebilir
         if (!(dx == dy || from.x == to.x || from.y == to.y))
             return false;
 
@@ -36,7 +35,6 @@ public class QueenMover : IPieceMover
         if (target != null && target.pieceColor == piece.pieceColor)
             return false;
 
-        // Açmaz kontrolü: hamle kuralları ve hedefte kendi taşı kontrolünden sonra, EN SON
         bool selfCheck = board.SimulateMoveAndCheckSelfCheck(piece, to);
         if (BoardManager.VerboseLogging)
             Debug.Log($"[Queen.IsValidMove] Simulate result for {from}->{to} selfCheck={selfCheck}");

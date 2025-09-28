@@ -41,7 +41,6 @@ public class PawnMover : IPieceMover
                 return true;
             }
 
-            // EN PASSANT
             if (targetPiece == null)
             {
                 var lastMove = board.lastMove;
@@ -54,7 +53,6 @@ public class PawnMover : IPieceMover
                 {
                     if (board.SimulateMoveAndCheckSelfCheck(piece, targetPosition))
                         return false;
-                    // En passant yapılabilir!
                     return true;
                 }
             }
@@ -69,11 +67,9 @@ public class PawnMover : IPieceMover
             return false;
 
         int direction = (piece.pieceColor == PieceColor.White) ? 1 : -1;
-        // Pawn attacks only diagonally forward by one
         if (Mathf.Abs(targetPosition.x - currentPosition.x) == 1 && targetPosition.y == currentPosition.y + direction)
             return true;
 
-        // En passant: if last move was an enemy pawn double-move and the capture square matches targetPosition
         var last = board.lastMove;
         if (last.piece != null && last.piece.pieceType == PieceType.Pawn && last.wasDoublePawnMove && last.piece.pieceColor != piece.pieceColor)
         {
@@ -83,11 +79,6 @@ public class PawnMover : IPieceMover
                 return true;
             }
         }
-
-        // Promotion: promotion doesn't change the pawn's attack squares for the move that captures on the last rank
-        // (the pawn still captures diagonally). If you need to consider the promoted piece's attacks after promotion,
-        // that is a separate consideration during move resolution/simulation.
-
         return false;
     }
 }
