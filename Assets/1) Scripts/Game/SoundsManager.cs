@@ -10,6 +10,11 @@ public class SoundsManager : MonoBehaviour
         BoardManager.PieceMoved += PlayPieceMoveSound;
     }
 
+    void OnDisable()
+    {
+        BoardManager.PieceMoved -= PlayPieceMoveSound;
+    }
+
     public void PlayPieceMoveSound(LastMoveInfo piece)
     {
         audioSource.PlayOneShot(pieceMoveClip);
